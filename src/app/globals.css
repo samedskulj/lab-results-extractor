@@ -1,0 +1,46 @@
+/* Landing page and anything built with shadcn/ui: full Tailwind including preflight. */
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "../styles/theme.css";
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply scroll-smooth;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+  ::selection {
+    background: rgb(43 92 230 / 0.18);
+  }
+}
+
+/* The evidence thread on the landing page: draws from the result to its source line. */
+@theme {
+  --animate-thread: thread-in 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-thread-end: thread-end 200ms cubic-bezier(0.16, 1, 0.3, 1) 550ms forwards;
+
+  @keyframes thread-in {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  @keyframes thread-end {
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-thread,
+  .animate-thread-end {
+    animation: none;
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}

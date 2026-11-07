@@ -1,0 +1,12 @@
+[
+  { "analyte_id": "haemoglobin", "value": 96, "unit": "g/L", "flag": "low" },
+  { "analyte_id": "ferritin", "value": 8, "unit": "ug/L", "flag": "low" },
+  { "analyte_id": "wbc", "value": 6.1, "unit": "10^9/L", "flag": "normal" },
+  { "analyte_id": "platelets", "value": 452, "unit": "10^9/L", "flag": "high" },
+  { "analyte_id": "sodium", "value": 138, "unit": "mmol/L", "flag": "normal" },
+  { "analyte_id": "potassium", "value": 4.1, "unit": "mmol/L", "flag": "normal" },
+  { "analyte_id": "creatinine", "value": 88, "unit": "umol/L", "flag": "normal" },
+  { "analyte_id": "tsh", "value": 1.9, "unit": "mU/L", "flag": "normal" },
+  { "analyte_id": "free_t4", "value": 15, "unit": "pmol/L", "flag": "normal" },
+  { "analyte_id": "crp", "value": 24, "unit": "mg/L", "flag": "high" }
+]

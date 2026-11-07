@@ -1,0 +1,7 @@
+[
+  { "id": "01-hospital-report", "title": "Hospital lab report", "description": "UK fixed-width report, SI units, printed ranges" },
+  { "id": "02-us-lab-panel", "title": "US lab panel", "description": "US conventional units (mg/dL, %) that need converting" },
+  { "id": "03-gp-referral-letter", "title": "GP referral letter", "description": "Results buried in prose, plus a historical value to ignore" },
+  { "id": "04-lis-export", "title": "LIS pipe export", "description": "Machine export with abbreviations and critical values" },
+  { "id": "05-ocr-scan", "title": "OCR'd scan", "description": "Scanned report with OCR noise (0/O, 1/l)" }
+]

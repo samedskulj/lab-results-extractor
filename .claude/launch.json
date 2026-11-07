@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "lab-results", "runtimeExecutable": "npm.cmd", "runtimeArgs": ["run", "dev"], "port": 5173 },
+    { "name": "lab-results-alt-port", "runtimeExecutable": "npx.cmd", "runtimeArgs": ["next", "dev", "-p", "5175"], "port": 5175 }
+  ]
+}

@@ -1,0 +1,108 @@
+/*
+ * Readout design tokens for Tailwind + shadcn/ui.
+ * Cool clinical daylight: pale blue-grey ground, white surfaces, navy ink, clinical blue for actions,
+ * mint for evidence and AI. State colours carry meaning only, always with an icon and a word:
+ * red = critical, amber = outside range, violet = check against the original, teal = in range.
+ */
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* shadcn/ui semantic tokens */
+  --background: #f2f5fa;
+  --foreground: #0b1628;
+  --card: #ffffff;
+  --card-foreground: #0b1628;
+  --popover: #ffffff;
+  --popover-foreground: #0b1628;
+  --primary: #2b5ce6;
+  --primary-foreground: #ffffff;
+  --secondary: #ffffff;
+  --secondary-foreground: #0b1628;
+  --muted: #eef2f8;
+  --muted-foreground: #5f6e86;
+  --accent: #eef2f8;
+  --accent-foreground: #0b1628;
+  --destructive: #e0353f;
+  --border: #e3e9f1;
+  --input: #cfd8e5;
+  --ring: #2b5ce6;
+  --radius: 0.75rem;
+
+  /* Readout palette (same values the dashboard uses) */
+  --ink-2: #3f4f66;
+  --ink-3: #5f6e86;
+  --blue-ink: #1a3fa8;
+  --blue-tint: #ebf0fe;
+  --mint: #12a994;
+  --mint-ink: #0a7666;
+  --mint-tint: #e4f6f2;
+  --critical: #e0353f;
+  --critical-ink: #b3202a;
+  --critical-tint: #fdeff0;
+  --critical-line: #f6c7cb;
+  --outside: #e89a0c;
+  --outside-ink: #915300;
+  --outside-tint: #fff6e3;
+  --outside-line: #f3d9a0;
+  --check: #7556f0;
+  --check-ink: #5636d2;
+  --check-tint: #f2effe;
+  --normal: #13a68b;
+  --normal-tint: #e6f6f2;
+}
+
+@theme inline {
+  --font-sans: var(--font-satoshi), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-cabinet), var(--font-satoshi), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-blue-ink: var(--blue-ink);
+  --color-blue-tint: var(--blue-tint);
+  --color-mint: var(--mint);
+  --color-mint-ink: var(--mint-ink);
+  --color-mint-tint: var(--mint-tint);
+  --color-critical: var(--critical);
+  --color-critical-ink: var(--critical-ink);
+  --color-critical-tint: var(--critical-tint);
+  --color-critical-line: var(--critical-line);
+  --color-outside: var(--outside);
+  --color-outside-ink: var(--outside-ink);
+  --color-outside-tint: var(--outside-tint);
+  --color-outside-line: var(--outside-line);
+  --color-check: var(--check);
+  --color-check-ink: var(--check-ink);
+  --color-check-tint: var(--check-tint);
+  --color-normal: var(--normal);
+  --color-normal-tint: var(--normal-tint);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --shadow-soft: 0 1px 2px rgb(11 22 40 / 0.04), 0 8px 24px -14px rgb(22 44 96 / 0.18);
+  --shadow-pop: 0 2px 6px rgb(11 22 40 / 0.06), 0 18px 44px -16px rgb(22 44 96 / 0.32);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}

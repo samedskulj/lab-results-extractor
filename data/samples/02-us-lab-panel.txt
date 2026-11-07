@@ -1,0 +1,22 @@
+CEDAR VALLEY CLINICAL LABORATORY
+Patient Name: Marcus Reed      DOB: 1979-07-22      Sex: M
+Collection Date: 10/14/2026    Fasting: Yes
+Ordering Physician: J. Hollis, MD
+
+COMPREHENSIVE METABOLIC PANEL
+  Glucose, Fasting              128 mg/dL        65-99         H
+  Creatinine                    1.02 mg/dL       0.76-1.27
+  Sodium                        141 mEq/L        134-144
+  Potassium                     4.3 mEq/L        3.5-5.2
+  ALT (SGPT)                    67 IU/L          0-44          H
+
+LIPID PANEL
+  Cholesterol, Total            242 mg/dL        100-199       H
+  Triglycerides                 210 mg/dL        0-149         H
+  HDL Cholesterol               38 mg/dL         >39           L
+  LDL Cholesterol Calc          162 mg/dL        0-99          H
+
+OTHER
+  Hemoglobin A1c                6.4 %            4.8-5.6       H
+  TSH                           2.10 uIU/mL      0.450-4.500
+  Vitamin D, 25-Hydroxy         18 ng/mL         30.0-100.0    L

@@ -1,0 +1,22 @@
+NORTHFIELD PATHOLOGY SERVICES
+Department of Clinical Biochemistry & Haematology
+
+Patient:   JONES, Eleanor          Lab No: NP-26-118243
+DOB:       14/03/1968              Sex: F
+Requested: Dr A. Patel, Riverside Surgery
+Collected: 02/10/2026 08:41        Reported: 02/10/2026 15:12
+
+TEST                      RESULT    UNITS          REF RANGE
+--------------------------------------------------------------
+Haemoglobin               118       g/L            (115 - 165)
+White cell count          7.2       x10^9/L        (4.0 - 11.0)
+Platelets                 268       x10^9/L        (150 - 400)
+Sodium                    139       mmol/L         (133 - 146)
+Potassium                 5.8       mmol/L         (3.5 - 5.3)    H
+Creatinine                131       umol/L         (45 - 84)      H
+eGFR                      39        mL/min/1.73m2  (>90)          L
+HbA1c                     52        mmol/mol       (20 - 41)      H
+Ferritin                  14        ug/L           (30 - 400)     L
+CRP                       3         mg/L           (<5)
+
+Comment: Suggest repeat U&E within 2 weeks.

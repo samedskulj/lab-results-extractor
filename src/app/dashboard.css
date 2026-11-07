@@ -1,0 +1,9 @@
+/*
+ * Dashboard: Tailwind theme + utilities without preflight, so the hand-written dashboard CSS
+ * (src/ui/styles.css) keeps its own base styles. New dashboard UI can use shadcn/ui and utilities.
+ */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@import "tw-animate-css";
+@import "../styles/theme.css";

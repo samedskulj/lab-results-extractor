@@ -1,0 +1,14 @@
+[
+  { "analyte_id": "glucose", "value": 128, "unit": "mg/dL", "flag": "high" },
+  { "analyte_id": "creatinine", "value": 1.02, "unit": "mg/dL", "flag": "normal" },
+  { "analyte_id": "sodium", "value": 141, "unit": "mEq/L", "flag": "normal" },
+  { "analyte_id": "potassium", "value": 4.3, "unit": "mEq/L", "flag": "normal" },
+  { "analyte_id": "alt", "value": 67, "unit": "IU/L", "flag": "high" },
+  { "analyte_id": "cholesterol", "value": 242, "unit": "mg/dL", "flag": "high" },
+  { "analyte_id": "triglycerides", "value": 210, "unit": "mg/dL", "flag": "high" },
+  { "analyte_id": "hdl", "value": 38, "unit": "mg/dL", "flag": "low" },
+  { "analyte_id": "ldl", "value": 162, "unit": "mg/dL", "flag": "high" },
+  { "analyte_id": "hba1c", "value": 6.4, "unit": "%", "flag": "high" },
+  { "analyte_id": "tsh", "value": 2.10, "unit": "uIU/mL", "flag": "normal" },
+  { "analyte_id": "vitamin_d", "value": 18, "unit": "ng/mL", "flag": "low" }
+]

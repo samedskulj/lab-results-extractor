@@ -1,0 +1,12 @@
+# LIS export v2.3 | Site: St Brannock's Hospital | Generated 2026-10-28T06:15:00Z
+# MRN|PatientName|DOB|Collected
+# 77120456|PRICE, Helen|1952-11-30|2026-10-28 05:52
+code|test|value|unit|low|high|flag
+HB|Hb|68|g/L|115|165|LL
+WBC|WBC|13.4|10*9/L|4.0|11.0|H
+PLT|Plt|98|10*9/L|150|400|L
+NA|Na+|124|mmol/L|133|146|L
+K|K+|6.4|mmol/L|3.5|5.3|HH
+CREA|Cr|212|umol/L|45|84|H
+GLU|Glu (random)|14.2|mmol/L|3.0|7.8|H
+CRP|CRP|187|mg/L|0|5|H

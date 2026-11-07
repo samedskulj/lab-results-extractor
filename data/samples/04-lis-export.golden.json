@@ -1,0 +1,10 @@
+[
+  { "analyte_id": "haemoglobin", "value": 68, "unit": "g/L", "flag": "critical_low" },
+  { "analyte_id": "wbc", "value": 13.4, "unit": "10^9/L", "flag": "high" },
+  { "analyte_id": "platelets", "value": 98, "unit": "10^9/L", "flag": "low" },
+  { "analyte_id": "sodium", "value": 124, "unit": "mmol/L", "flag": "low" },
+  { "analyte_id": "potassium", "value": 6.4, "unit": "mmol/L", "flag": "critical_high" },
+  { "analyte_id": "creatinine", "value": 212, "unit": "umol/L", "flag": "high" },
+  { "analyte_id": "glucose", "value": 14.2, "unit": "mmol/L", "flag": "high" },
+  { "analyte_id": "crp", "value": 187, "unit": "mg/L", "flag": "high" }
+]
