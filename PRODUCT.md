@@ -23,25 +23,25 @@ Success: the clinician reaches "what needs my attention" faster than reading the
 
 ## Positioning
 
-The model only reads; deterministic code converts units and decides flags; every value must be backed by a quote that exists in the document, or it is flagged for review. Accuracy is measured against a hand-labelled golden set, compared with a rule-based baseline.
+The model only reads; deterministic code converts units and decides flags; every value must be backed by a quote that exists in the document, or it is flagged for review. Accuracy is measured against a hand-labelled golden set with `npm run eval`.
 
 ## Operating Context
 
-- Input is pasted text or one of five built-in sample documents (`data/samples`). PDF and image input are not supported yet.
-- Two engines: Claude (needs ANTHROPIC_API_KEY) and a rule-based baseline that also serves as offline mode.
-- An "accuracy test" runs both engines against the golden set (5 documents, 50 labelled results).
+- Input is a photo or PDF of a report, or pasted text. The doctor picks the report's country (a template for units, decimals, dates and language). A photo or PDF is first transcribed to text by the AI, so every later value is checked against that text. Sign-in is email and password (Supabase); the AI routes require it.
+- One engine: the AI assistant (Claude Haiku 5.5; needs ANTHROPIC_API_KEY). There is no offline or rule-based mode.
+- `npm run eval` scores it against the golden set in `data/samples` (5 fictional documents, 50 labelled results). Developer tooling only, never in the product UI.
 
 ## Capabilities and Constraints
 
 - 19 analytes in the catalogue (`shared/catalogue.ts`); unknown tests pass through for review.
 - Default reference ranges are adult and not sex-specific; ranges printed on the report take precedence.
 - Commentary, explanations, answers and letters are decision support, not a diagnosis. Anything drafted for a patient needs the doctor's approval first.
-- Claude responses are cached locally, so demos replay instantly.
+- Responses to pasted text are cached locally (`.llm-cache`) so repeats replay instantly. Photos and PDFs are never cached.
 
 ## Evidence on Hand
 
 - Baseline accuracy: 74% recall, 72% value accuracy, 74% flag accuracy on the golden set.
-- Claude accuracy: to be measured with `npm run eval`. Do not quote numbers before then.
+- AI accuracy: to be measured with `npm run eval`. Do not quote numbers before then.
 - All patients are fictional. There are no real customers, testimonials or clinical validation.
 
 ## Product Principles

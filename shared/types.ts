@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { ANALYTE_IDS, type AnalyteId } from "./catalogue.ts";
+import { REGION_IDS } from "./regions.ts";
 
-export const ExtractorIdSchema = z.enum(["claude", "baseline"]);
-export type ExtractorId = z.infer<typeof ExtractorIdSchema>;
+export const RegionIdSchema = z.enum(REGION_IDS);
 
-/* ---------- What an extractor returns: values exactly as reported ---------- */
+/* ---------- What the reader returns: values exactly as reported ---------- */
 
 export const RawResultSchema = z.object({
   analyte_id: z
@@ -90,15 +90,26 @@ export interface Sample {
 }
 
 export const ExtractRequestSchema = z.object({
-  text: z.string().trim().min(20, "Paste a lab report (at least 20 characters)").max(50_000),
-  extractor: ExtractorIdSchema,
+  text: z.string().trim().min(20, "The document needs at least 20 characters of text").max(50_000),
+  region: RegionIdSchema.default("other"),
 });
 
-export const EvalRequestSchema = z.object({ extractor: ExtractorIdSchema });
+/** A photo or PDF of a report, as base64 (no data: prefix). The browser shrinks photos before sending. */
+export const FILE_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"] as const;
+export const TranscribeRequestSchema = z.object({
+  media_type: z.enum(FILE_TYPES),
+  data: z.string().min(100, "The file is empty").max(8_000_000, "The file is too large. Try a smaller photo or fewer pages."),
+  region: RegionIdSchema.default("other"),
+});
+export type TranscribeRequest = z.infer<typeof TranscribeRequestSchema>;
+
+export interface Transcription {
+  text: string;
+  elapsed_ms: number;
+}
 
 /** Step 1-3 of the pipeline: read, standardise, verify. */
 export interface Extraction {
-  extractor: ExtractorId;
   meta: ReportMeta;
   results: NormalisedResult[];
   elapsed_ms: number;
@@ -117,7 +128,6 @@ export const CommentaryResultSchema = z.object({
 export type CommentaryResult = z.infer<typeof CommentaryResultSchema>;
 
 export const CommentaryRequestSchema = z.object({
-  extractor: ExtractorIdSchema,
   results: z.array(CommentaryResultSchema).max(200),
 });
 
@@ -158,7 +168,6 @@ export const ExplanationSchema = z.object({
 export type Explanation = z.infer<typeof ExplanationSchema>;
 
 export interface ExplanationResponse {
-  extractor: ExtractorId;
   explanation: Explanation;
   elapsed_ms: number;
 }
@@ -173,7 +182,6 @@ export const AnswerSchema = z.object({
 export type Answer = z.infer<typeof AnswerSchema>;
 
 export interface AnswerResponse {
-  extractor: ExtractorId;
   answer: Answer;
   elapsed_ms: number;
 }
@@ -187,17 +195,15 @@ export const LetterSchema = z.object({
 export type Letter = z.infer<typeof LetterSchema>;
 
 export interface LetterResponse {
-  extractor: ExtractorId;
   letter: Letter;
   elapsed_ms: number;
 }
 
 const ResultsPayload = z.array(CommentaryResultSchema).max(200);
 
-export const ExplainRequestSchema = z.object({ extractor: ExtractorIdSchema, results: ResultsPayload });
+export const ExplainRequestSchema = z.object({ results: ResultsPayload });
 
 export const AskRequestSchema = z.object({
-  extractor: ExtractorIdSchema,
   results: ResultsPayload,
   question: z.string().trim().min(2, "Type a question").max(500),
   history: z.array(z.object({ question: z.string().max(500), answer: z.string().max(2000) })).max(10).default([]),
@@ -205,7 +211,6 @@ export const AskRequestSchema = z.object({
 export type AskRequest = z.infer<typeof AskRequestSchema>;
 
 export const LetterRequestSchema = z.object({
-  extractor: ExtractorIdSchema,
   results: ResultsPayload,
   patient_name: z.string().max(200).nullable(),
 });
@@ -232,7 +237,6 @@ export interface SampleScore extends Counts, Metrics {
 }
 
 export interface EvalReport {
-  extractor: ExtractorId;
   samples: SampleScore[];
   overall: Counts & Metrics;
   elapsed_ms: number;

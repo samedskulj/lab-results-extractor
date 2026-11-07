@@ -5,38 +5,35 @@ import {
   ExplainRequestSchema,
   ExtractRequestSchema,
   LetterRequestSchema,
-  type ExtractorId,
+  TranscribeRequestSchema,
 } from "../shared/types.ts";
-import { createApi, isLive, parseBody } from "./lib/index.ts";
-import { ask, draftLetter, explain, extractResults, summarise } from "./pipeline.ts";
-import { listSamples } from "./samples.ts";
+import { createApi, isLive, parseBody, requireSignIn } from "./lib/index.ts";
+import { ask, draftLetter, explain, extractResults, summarise, transcribeFile } from "./pipeline.ts";
 
-function requireAvailable(extractor: ExtractorId): ExtractorId {
-  if (extractor === "claude" && !isLive()) {
-    throw new HTTPException(400, { message: "Claude needs an ANTHROPIC_API_KEY in .env. The rule-based engine works without one." });
-  }
-  return extractor;
+/** Fail early with a plain sentence when the server has no AI credentials. */
+function requireAi() {
+  if (!isLive()) throw new HTTPException(503, { message: "The AI assistant isn't set up on this server yet. Add ANTHROPIC_API_KEY to .env." });
 }
 
 export const app = createApi()
-  .get("/samples", async (c) => c.json(await listSamples()))
+  // The health route is registered first and answers on its own; everything below needs a signed-in doctor and the AI.
+  .use("*", requireSignIn)
+  .use("*", async (_c, next) => {
+    requireAi();
+    await next();
+  })
+  .post("/transcribe", async (c) => c.json(await transcribeFile(await parseBody(c, TranscribeRequestSchema))))
   .post("/extract", async (c) => {
-    const { text, extractor } = await parseBody(c, ExtractRequestSchema);
-    return c.json(await extractResults(text, requireAvailable(extractor)));
+    const { text, region } = await parseBody(c, ExtractRequestSchema);
+    return c.json(await extractResults(text, region));
   })
-  .post("/commentary", async (c) => {
-    const { results, extractor } = await parseBody(c, CommentaryRequestSchema);
-    return c.json(await summarise(results, requireAvailable(extractor)));
-  })
-  .post("/explain", async (c) => {
-    const { results, extractor } = await parseBody(c, ExplainRequestSchema);
-    return c.json(await explain(results, requireAvailable(extractor)));
-  })
+  .post("/commentary", async (c) => c.json(await summarise((await parseBody(c, CommentaryRequestSchema)).results)))
+  .post("/explain", async (c) => c.json(await explain((await parseBody(c, ExplainRequestSchema)).results)))
   .post("/ask", async (c) => {
-    const { results, extractor, question, history } = await parseBody(c, AskRequestSchema);
-    return c.json(await ask(results, question, history, requireAvailable(extractor)));
+    const { results, question, history } = await parseBody(c, AskRequestSchema);
+    return c.json(await ask(results, question, history));
   })
   .post("/letter", async (c) => {
-    const { results, extractor, patient_name } = await parseBody(c, LetterRequestSchema);
-    return c.json(await draftLetter(results, patient_name, requireAvailable(extractor)));
+    const { results, patient_name } = await parseBody(c, LetterRequestSchema);
+    return c.json(await draftLetter(results, patient_name));
   });

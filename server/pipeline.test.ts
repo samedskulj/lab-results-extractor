@@ -1,34 +1,8 @@
-import { describe, expect, it } from "vitest";
-import type { CommentaryResult, NormalisedResult } from "../shared/types.ts";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { NormalisedResult } from "../shared/types.ts";
 import { app } from "./app.ts";
 import { scoreResults } from "./eval.ts";
-import { parseLine, parseRange } from "./extractors/baseline.ts";
-import { answerByRules, explainByRules, letterByRules } from "./extractors/rules.ts";
-import { groundCommentary, groundExplanation } from "./pipeline.ts";
-
-describe("baseline parser", () => {
-  it("parses table, US and pipe-delimited lines", () => {
-    expect(parseLine("Potassium                 5.8       mmol/L         (3.5 - 5.3)    H")).toMatchObject({
-      analyte_id: "potassium", value: 5.8, unit: "mmol/L", ref_low: 3.5, ref_high: 5.3,
-    });
-    expect(parseLine("  HDL Cholesterol               38 mg/dL         >39           L")).toMatchObject({
-      analyte_id: "hdl", value: 38, unit: "mg/dL", ref_low: 39, ref_high: null,
-    });
-    expect(parseLine("K|K+|6.4|mmol/L|3.5|5.3|HH")).toMatchObject({ analyte_id: "potassium", value: 6.4, unit: "mmol/L" });
-    expect(parseLine("Comment: Suggest repeat U&E within 2 weeks.")).toBeNull();
-  });
-
-  it("does not confuse HbA1c with haemoglobin", () => {
-    expect(parseLine("HbA1c   52   mmol/mol")?.analyte_id).toBe("hba1c");
-  });
-
-  it("parses range notations", () => {
-    expect(parseRange("(115 - 165)")).toEqual([115, 165]);
-    expect(parseRange("<5")).toEqual([null, 5]);
-    expect(parseRange("(>90)")).toEqual([90, null]);
-    expect(parseRange("none")).toEqual([null, null]);
-  });
-});
+import { groundAnswer, groundCommentary, groundExplanation } from "./pipeline.ts";
 
 const result = (analyte_id: NormalisedResult["analyte_id"], value: number, flag: NormalisedResult["flag"]) =>
   ({ analyte_id, value, flag }) as NormalisedResult;
@@ -77,51 +51,49 @@ describe("groundExplanation", () => {
   });
 });
 
-describe("rule-based explain, ask and letter", () => {
-  const r = (analyte_id: CommentaryResult["analyte_id"], value: number, flag: CommentaryResult["flag"]) =>
-    ({ analyte_id, name: analyte_id, value, unit: "u", ref_low: 1, ref_high: 2, flag }) as CommentaryResult;
-  const results = [r("potassium", 5.8, "high"), r("creatinine", 131, "high"), r("egfr", 39, "low"), r("tsh", 1.9, "normal")];
-
-  it("finds known patterns and rules out the in-range ones", () => {
-    const e = explainByRules(results);
-    expect(e.explanations.map((x) => x.title)).toEqual(["Reduced kidney function", "Hyperkalaemia"]);
-    expect(e.ruled_out.map((x) => x.title)).toEqual(["Thyroid disorder"]);
-  });
-
-  it("looks up named results and declines free questions", () => {
-    expect(answerByRules(results, "What was the potassium?")).toMatchObject({ answerable: true, analyte_ids: ["potassium"] });
-    expect(answerByRules(results, "Is this serious?").answerable).toBe(false);
-  });
-
-  it("drafts a letter that names the patient and every abnormal result", () => {
-    const { body } = letterByRules(results, "JONES, Eleanor");
-    expect(body.startsWith("Dear Eleanor,")).toBe(true);
-    expect(body.match(/^- /gm)).toHaveLength(3);
+describe("groundAnswer", () => {
+  it("keeps only citations that exist", () => {
+    expect(groundAnswer({ answer: "", answerable: true, analyte_ids: ["potassium", "tsh"] }, [result("potassium", 5.8, "high")]).analyte_ids).toEqual(["potassium"]);
   });
 });
 
 describe("API", () => {
-  const post = (path: string, body: unknown) =>
-    app.request(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const post = (path: string, body: unknown, headers: Record<string, string> = {}) =>
+    app.request(path, { method: "POST", headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify(body) });
 
-  it("lists samples", async () => {
-    const res = await app.request("/api/samples");
-    expect(res.status).toBe(200);
-    expect(await res.json()).toHaveLength(5);
+  const saved = { ...process.env };
+  beforeEach(() => {
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    delete process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    process.env.ANTHROPIC_API_KEY = "test-key";
+  });
+  afterEach(() => {
+    process.env = { ...saved };
   });
 
-  it("extracts with the baseline", async () => {
-    const res = await post("/api/extract", { text: "Sodium 139 mmol/L (133 - 146)\nPotassium 5.8 mmol/L (3.5 - 5.3)", extractor: "baseline" });
-    const body = await res.json();
-    expect(res.status).toBe(200);
-    expect(body.results.map((r: NormalisedResult) => r.flag)).toEqual(["normal", "high"]);
+  it("answers the health check without signing in", async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_test";
+    expect((await app.request("/api/health")).status).toBe(200);
   });
 
-  it("rejects invalid input and Claude without a key", async () => {
-    expect((await post("/api/extract", { text: "short", extractor: "baseline" })).status).toBe(400);
-    const prevKey = process.env.ANTHROPIC_API_KEY;
+  it("refuses AI routes without a sign-in when auth is configured", async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_test";
+    const res = await post("/api/extract", { text: "Sodium 139 mmol/L (133 - 146)" });
+    expect(res.status).toBe(401);
+    expect(await res.json()).toMatchObject({ code: "signed_out" });
+  });
+
+  it("says plainly when the AI isn't set up", async () => {
     delete process.env.ANTHROPIC_API_KEY;
-    expect((await post("/api/extract", { text: "Sodium 139 mmol/L (133 - 146)", extractor: "claude" })).status).toBe(400);
-    process.env.ANTHROPIC_API_KEY = prevKey;
+    delete process.env.ANTHROPIC_AUTH_TOKEN;
+    expect((await post("/api/extract", { text: "Sodium 139 mmol/L (133 - 146)" })).status).toBe(503);
+  });
+
+  it("rejects invalid input", async () => {
+    expect((await post("/api/extract", { text: "short" })).status).toBe(400);
+    expect((await post("/api/extract", { text: "Sodium 139 mmol/L (133 - 146)", region: "narnia" })).status).toBe(400);
+    expect((await post("/api/transcribe", { media_type: "image/gif", data: "x".repeat(200) })).status).toBe(400);
   });
 });

@@ -78,3 +78,14 @@ describe("normaliseResult", () => {
     expect(r).toMatchObject({ analyte_id: "unknown", name: "Lipase", flag: "unknown", needs_review: true });
   });
 });
+
+describe("decimal commas", () => {
+  it("accepts a comma as the decimal mark when checking a value against its quote", () => {
+    const r = normaliseResult(
+      raw({ analyte_id: "potassium", name_as_written: "Kalium", value: 5.8, unit: "mmol/L", ref_low: 3.5, ref_high: 5.1, evidence: "Kalium 5,8 mmol/l 3,5 - 5,1" }),
+      "Kalium 5,8 mmol/l 3,5 - 5,1",
+    );
+    expect(r.issues.map((i) => i.code)).not.toContain("value_not_in_evidence");
+    expect(r.flag).toBe("high");
+  });
+});

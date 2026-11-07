@@ -6,7 +6,7 @@ import { rangeGeometry } from "@/format";
 import { cn } from "@/lib/utils";
 import { TONE, type Tone } from "./tone";
 
-/** An excerpt of the fictional LIS export that ships as a sample document. */
+/** An excerpt of a fictional LIS export, used to illustrate how a value traces to its source line. */
 const DOC = [
   "# MRN|PatientName|DOB|Collected",
   "# 77120456|PRICE, Helen|1952-11-30|2026-10-28 05:52",
@@ -172,7 +172,7 @@ export function EvidenceBoard() {
             </button>
           ))}
         </span>
-        <span className="basis-full text-[0.8125rem] text-muted-foreground">Fictional patient from the sample documents.</span>
+        <span className="basis-full text-[0.8125rem] text-muted-foreground">Fictional example patient.</span>
       </figcaption>
     </figure>
   );

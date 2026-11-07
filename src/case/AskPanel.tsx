@@ -7,9 +7,7 @@ import type { CaseState } from "./useCases.ts";
 /** Starter questions built from this patient's own results. */
 function suggestions(c: CaseState): string[] {
   const results = c.extraction.data?.results ?? [];
-  const engine = c.extraction.data?.extractor;
   const flagged = results.filter((r) => groupOf(r) === "critical" || groupOf(r) === "outside").slice(0, 2);
-  if (engine === "baseline") return [...new Set([...flagged, ...results].map((r) => `What was the ${r.name.toLowerCase()}?`))].slice(0, 3);
   return [
     ...flagged.map((r) => `What could explain the ${FLAG_DISPLAY[r.flag].label.toLowerCase()} ${r.name}?`),
     "Which results should be repeated, and when?",
@@ -100,7 +98,7 @@ export function AskPanel({
             {t.answer && (
               <div className={`turn-a${t.answer.answer.answerable ? "" : " is-unanswerable"}`}>
                 <div className="turn-meta">
-                  <SourceTag engine={t.answer.extractor} fellBack={t.fellBack} />
+                  <SourceTag />
                   {!t.answer.answer.answerable && (
                     <span className="unanswerable">
                       <CircleHelp size={12} aria-hidden /> Not answerable from these results

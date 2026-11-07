@@ -1,15 +1,16 @@
-import { generateStructured } from "../lib/index.ts";
+import { generateStructured, readFromFile, type FileInput } from "./lib/index.ts";
 import {
   AnswerSchema,
   CommentarySchema,
   ExplanationSchema,
   LetterSchema,
   RawExtractionSchema,
+  type AskRequest,
   type CommentaryResult,
-} from "../../shared/types.ts";
-import type { Extractor } from "./types.ts";
+} from "../shared/types.ts";
+import { REGIONS, type RegionId } from "../shared/regions.ts";
 
-const EXTRACT_SYSTEM = `You extract laboratory test results from clinical documents: lab reports, LIS exports, referral letters and OCR'd scans.
+const EXTRACT_SYSTEM = `You read laboratory test results from clinical documents: lab reports, LIS exports, referral letters and OCR'd scans.
 
 Rules:
 - Extract every current result. Skip historical values quoted for comparison (e.g. "down from 141 in January").
@@ -55,48 +56,78 @@ const LETTER_SYSTEM = `You draft a short letter from a GP to their patient expla
 - Start with "Dear <first name>," (or "Dear patient," if no name). End with "Best wishes," then "[Doctor's name]" on its own line.
 - About 150 to 250 words.`;
 
-export const claudeExtractor: Extractor = {
-  extract: (document) =>
+const regionNote = (region: RegionId) => `<report_template>
+${REGIONS[region].hint}
+</report_template>`;
+
+const TRANSCRIBE_SYSTEM = `You transcribe photographed, scanned or PDF laboratory documents into plain text, exactly as printed.
+
+Rules:
+- Copy every word and number character for character, including typos, odd spacing and printed abbreviations. Never correct, convert units, translate, summarise or leave anything out.
+- Keep the layout: one table row per line, columns separated by spaces. Keep headers, patient details, dates, reference ranges, flags (H, L, *) and comments.
+- If something is unreadable write [illegible] in its place. Never guess a digit.
+- Output only the transcription, with no commentary.`;
+
+/** Photo or PDF -> text, so everything after it can quote and verify against the document. */
+export const transcribe = (file: FileInput, region: RegionId): Promise<string> =>
+  readFromFile(file, TRANSCRIBE_SYSTEM, `Transcribe this document.
+${regionNote(region)}`);
+
+export const ai = {
+  extract: (document: string, region: RegionId = "other") =>
     generateStructured({
       schema: RawExtractionSchema,
       system: EXTRACT_SYSTEM,
-      prompt: `<document>\n${document}\n</document>`,
-      effort: "medium",
-    }),
-
-  comment: (results) =>
-    generateStructured({
-      schema: CommentarySchema,
-      system: COMMENT_SYSTEM,
-      prompt: `<results>\n${resultsForPrompt(results)}\n</results>`,
+      prompt: `${regionNote(region)}
+<document>
+${document}
+</document>`,
       effort: "low",
     }),
 
-  explain: (results) =>
+  comment: (results: CommentaryResult[]) =>
+    generateStructured({
+      schema: CommentarySchema,
+      system: COMMENT_SYSTEM,
+      prompt: `<results>
+${resultsForPrompt(results)}
+</results>`,
+      effort: "low",
+    }),
+
+  explain: (results: CommentaryResult[]) =>
     generateStructured({
       schema: ExplanationSchema,
       system: EXPLAIN_SYSTEM,
-      prompt: `<results>\n${resultsForPrompt(results)}\n</results>`,
+      prompt: `<results>
+${resultsForPrompt(results)}
+</results>`,
       effort: "medium",
     }),
 
-  ask: (results, question, history) =>
+  ask: (results: CommentaryResult[], question: string, history: AskRequest["history"]) =>
     generateStructured({
       schema: AnswerSchema,
       system: ASK_SYSTEM,
       prompt: [
-        `<results>\n${resultsForPrompt(results)}\n</results>`,
-        ...history.map((h) => `<earlier_question>${h.question}</earlier_question>\n<earlier_answer>${h.answer}</earlier_answer>`),
+        `<results>
+${resultsForPrompt(results)}
+</results>`,
+        ...history.map((h) => `<earlier_question>${h.question}</earlier_question>
+<earlier_answer>${h.answer}</earlier_answer>`),
         `<question>${question}</question>`,
       ].join("\n"),
       effort: "low",
     }),
 
-  letter: (results, patientName) =>
+  letter: (results: CommentaryResult[], patientName: string | null) =>
     generateStructured({
       schema: LetterSchema,
       system: LETTER_SYSTEM,
-      prompt: `<patient_name>${patientName ?? "unknown"}</patient_name>\n<results>\n${resultsForPrompt(results)}\n</results>`,
+      prompt: `<patient_name>${patientName ?? "unknown"}</patient_name>
+<results>
+${resultsForPrompt(results)}
+</results>`,
       effort: "low",
     }),
 };

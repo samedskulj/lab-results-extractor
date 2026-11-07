@@ -1,7 +1,7 @@
 import { Check, CircleAlert, FilePlus2, FileText, Inbox, LoaderCircle, LogOut } from "lucide-react";
 import { useAuth } from "../auth/AuthGate.tsx";
 import type { Route } from "../App.tsx";
-import { caseName, caseStatus, hasPatientName, type CaseStatus, type Triage } from "../case/status.ts";
+import { caseName, caseStatus, hasPatientName, type CaseStatus } from "../case/status.ts";
 import type { CaseDoc, CaseState } from "../case/useCases.ts";
 import { initials } from "../format.ts";
 import { Mark } from "../ui/Mark.tsx";
@@ -16,23 +16,18 @@ export function StatusIcon({ status }: { status: CaseStatus }) {
 export function Sidebar({
   docs,
   cases,
-  triage,
-  savedReviewed,
   route,
   onRoute,
   onOpen,
 }: {
   docs: CaseDoc[];
   cases: Record<string, CaseState>;
-  triage: Record<string, Triage>;
-  savedReviewed: Record<string, boolean>;
   route: Route;
   onRoute: (r: Route) => void;
   onOpen: (doc: CaseDoc) => void;
 }) {
   const auth = useAuth();
-  const isReviewed = (id: string) => cases[id]?.reviewed ?? savedReviewed[id];
-  const waiting = docs.filter((d) => !isReviewed(d.id)).length;
+  const waiting = docs.filter((d) => !cases[d.id]?.reviewed).length;
 
   return (
     <aside className="sidebar" aria-label="Navigation">
@@ -47,7 +42,7 @@ export function Sidebar({
           Worklist
           {waiting > 0 && <span className="nav-count" aria-label={`${waiting} not reviewed`}>{waiting}</span>}
         </button>
-        <button onClick={() => onRoute({ kind: "worklist", focusPaste: Date.now() })}>
+        <button onClick={() => onRoute({ kind: "worklist", focusAdd: Date.now() })}>
           <FilePlus2 size={18} aria-hidden />
           Add a document
         </button>
@@ -60,10 +55,9 @@ export function Sidebar({
         <ul>
           {docs.map((doc) => {
             const c = cases[doc.id];
-            const t = triage[doc.id];
-            const name = caseName(doc, c, t);
-            const named = hasPatientName(c, t);
-            const status = caseStatus(c, t, savedReviewed[doc.id]);
+            const name = caseName(doc, c);
+            const named = hasPatientName(c);
+            const status = c ? caseStatus(c) : { tone: "new" as const, label: "New" };
             const isCurrent = route.kind === "case" && route.id === doc.id;
             return (
               <li key={doc.id}>
@@ -96,7 +90,7 @@ export function Sidebar({
             </button>
           </div>
         )}
-        <p>Fictional patients. Decision support, not a diagnosis.</p>
+        <p>Decision support, not a diagnosis.</p>
       </div>
     </aside>
   );

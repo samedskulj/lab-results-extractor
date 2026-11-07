@@ -5,9 +5,8 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { z } from "zod";
 
-const DEFAULT_MODEL = "claude-opus-5-5";
-/** Models that accept the server-side `fallbacks: "default"` refusal fallback. */
-const FALLBACK_MODELS = new Set(["claude-opus-5-5", "claude-opus-5", "claude-fable-5-1", "claude-sonnet-5-5"]);
+/** Small and fast: reading, summarising and drafting from checked values doesn't need a larger model. */
+const DEFAULT_MODEL = "claude-haiku-5-5";
 const CACHE_DIR = path.resolve(".llm-cache");
 
 export type Effort = "low" | "medium" | "high";
@@ -16,14 +15,30 @@ export class LlmError extends Error {
   override name = "LlmError";
 }
 
-export const model = (): string => process.env.CLAUDE_MODEL ?? DEFAULT_MODEL;
+export const model = (): string => process.env.AI_MODEL ?? DEFAULT_MODEL;
 
-/** Live mode = we have credentials for the Claude API. Otherwise apps run their offline fallbacks. */
-export const isLive = (): boolean =>
-  Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
+/** True when the server has credentials for the AI service. */
+export const isLive = (): boolean => Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
 
 let client: Anthropic | undefined;
 const getClient = (): Anthropic => (client ??= new Anthropic());
+
+/** A document the AI should read directly: a photo or a PDF. */
+export interface FileInput {
+  media_type: "image/jpeg" | "image/png" | "image/webp" | "application/pdf";
+  /** Base64, no data: prefix. */
+  data: string;
+}
+
+const fileBlock = ({ media_type, data }: FileInput): Anthropic.ContentBlockParam =>
+  media_type === "application/pdf"
+    ? { type: "document", source: { type: "base64", media_type, data } }
+    : { type: "image", source: { type: "base64", media_type, data } };
+
+function refusedOrCutOff(stopReason: string | null) {
+  if (stopReason === "refusal") throw new LlmError("The AI assistant declined this request.");
+  if (stopReason === "max_tokens") throw new LlmError("The AI assistant's response was cut off. Try a shorter document.");
+}
 
 export interface StructuredRequest<T> {
   schema: z.ZodType<T>;
@@ -33,16 +48,11 @@ export interface StructuredRequest<T> {
 }
 
 /**
- * One Claude call that must return data matching `schema`.
+ * One AI call that must return data matching `schema`.
  * Structured outputs guarantee the JSON shape; Zod re-validates it on the way in.
- * Responses are cached on disk by request hash so demos and evals replay deterministically.
+ * Responses are cached on disk by request hash so repeated requests and evals replay deterministically.
  */
-export async function generateStructured<T>({
-  schema,
-  system,
-  prompt,
-  effort = "medium",
-}: StructuredRequest<T>): Promise<T> {
+export async function generateStructured<T>({ schema, system, prompt, effort = "low" }: StructuredRequest<T>): Promise<T> {
   const format = betaZodOutputFormat(schema);
   const key = hash({ model: model(), system, prompt, effort, format });
 
@@ -55,17 +65,29 @@ export async function generateStructured<T>({
     system,
     messages: [{ role: "user", content: prompt }],
     output_config: { effort, format },
-    ...(FALLBACK_MODELS.has(model())
-      ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const }
-      : {}),
   });
 
-  if (response.stop_reason === "refusal") throw new LlmError("Claude declined this request.");
-  if (response.stop_reason === "max_tokens") throw new LlmError("Claude's response was cut off.");
-  if (!response.parsed_output) throw new LlmError("Claude's response did not match the expected schema.");
+  refusedOrCutOff(response.stop_reason);
+  if (!response.parsed_output) throw new LlmError("The AI assistant's response did not match the expected format.");
 
   await writeCache(key, response.parsed_output);
   return response.parsed_output;
+}
+
+/** Read a photo or PDF and return its text, as printed. Not cached: the file may be a patient record. */
+export async function readFromFile(file: FileInput, system: string, instruction: string): Promise<string> {
+  const response = await getClient().messages.create({
+    model: model(),
+    max_tokens: 16000,
+    system,
+    output_config: { effort: "low" },
+    messages: [{ role: "user", content: [fileBlock(file), { type: "text", text: instruction }] }],
+  });
+
+  refusedOrCutOff(response.stop_reason);
+  const text = response.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("\n").trim();
+  if (!text) throw new LlmError("The AI assistant couldn't read any text in this file.");
+  return text;
 }
 
 const cacheEnabled = (): boolean => process.env.LLM_CACHE !== "off";

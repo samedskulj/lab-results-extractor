@@ -37,7 +37,7 @@ const SEVERITY = Object.fromEntries(GROUPS.map((g, i) => [g.id, i]));
  */
 export function ExplainStep({ c, onShowResult, onRetry, onAsk }: { c: CaseState; onShowResult: (i: number) => void; onRetry: () => void; onAsk: () => void }) {
   const results = c.extraction.data!.results;
-  const { status, data, error, fellBack } = c.explanation;
+  const { status, data, error } = c.explanation;
   const explanation = data?.explanation;
 
   const indexOf = useCallback((id: string) => results.findIndex((r) => r.analyte_id === id), [results]);
@@ -122,7 +122,6 @@ export function ExplainStep({ c, onShowResult, onRetry, onAsk }: { c: CaseState;
     );
   }
 
-  const engine = data?.extractor;
 
   return (
     <div className="stack explain">
@@ -131,7 +130,7 @@ export function ExplainStep({ c, onShowResult, onRetry, onAsk }: { c: CaseState;
           {explanation.headline}
         </h2>
         <p className="ai-meta">
-          <SourceTag engine={engine} fellBack={fellBack} />
+          <SourceTag />
           <span className="muted small">
             Ranked by how strongly these results alone support each one. Decision support, not a diagnosis: symptoms, history and examination aren&apos;t part of
             this.

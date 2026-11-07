@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { RegionId } from "../../shared/regions.ts";
 import type {
   AnswerResponse,
   CommentaryResponse,
   CommentaryResult,
   ExplanationResponse,
   Extraction,
-  ExtractorId,
   LetterResponse,
 } from "../../shared/types.ts";
 import type { CasePersistence } from "../auth/useSavedCases.ts";
@@ -18,15 +18,18 @@ export interface Task<T> {
   status: "idle" | "loading" | "done" | "error";
   data?: T;
   error?: ApiError;
-  /** True when Claude was unavailable and the rule-based engine answered instead. */
-  fellBack?: boolean;
 }
 
 export interface CaseDoc {
   id: string;
   title: string;
   description?: string;
+  /** The document as text: pasted, or read from a photo or PDF. Every value is checked against it. */
   text: string;
+  /** Country template the doctor chose, which tells the reader what to expect. */
+  region: RegionId;
+  /** The photo or PDF this text was read from, kept in this browser tab only so values can be checked by eye. */
+  source?: { kind: "image" | "pdf"; url: string; name: string };
 }
 
 export interface ChatTurn {
@@ -35,7 +38,6 @@ export interface ChatTurn {
   status: "loading" | "done" | "error";
   answer?: AnswerResponse;
   error?: ApiError;
-  fellBack?: boolean;
 }
 
 export interface CaseState {
@@ -55,17 +57,6 @@ const idle = { status: "idle" } as const;
 /** Only the standardised fields ever reach the summary, explain, ask and letter steps. */
 const forAi = (e: Extraction): CommentaryResult[] =>
   e.results.map(({ analyte_id, name, value, unit, ref_low, ref_high, flag }) => ({ analyte_id, name, value, unit, ref_low, ref_high, flag }));
-
-/** Call with the chosen engine; if Claude is unavailable, ask the rule-based engine and say so. */
-async function withFallback<T>(engine: ExtractorId, call: (e: ExtractorId) => Promise<T>): Promise<{ data: T; fellBack: boolean }> {
-  try {
-    return { data: await call(engine), fellBack: false };
-  } catch (err) {
-    const error = asApiError(err);
-    if (error.code !== "claude_unavailable" || engine === "baseline") throw error;
-    return { data: await call("baseline"), fellBack: true };
-  }
-}
 
 const REVIEWED_KEY = "lab-results:reviewed";
 const readReviewed = (): Set<string> => {
@@ -88,7 +79,7 @@ const writeReviewed = (set: Set<string>) => {
  * (read, standardise and verify in one call, then summarise, then explain) and keeps
  * its letter draft and conversation while the doctor moves between patients.
  */
-export function useCases(engine: ExtractorId, persistence?: CasePersistence) {
+export function useCases(persistence?: CasePersistence) {
   const [cases, setCases] = useState<Record<string, CaseState>>({});
   const casesRef = useRef(cases);
   useEffect(() => {
@@ -100,7 +91,7 @@ export function useCases(engine: ExtractorId, persistence?: CasePersistence) {
   }, []);
 
   const analyse = useCallback(
-    async (id: string, text: string, fresh = false) => {
+    async (id: string, text: string, region: RegionId, fresh = false) => {
       // A re-run starts the case's AI work again; a first open keeps any letter saved from before.
       patch(id, () =>
         fresh
@@ -109,34 +100,32 @@ export function useCases(engine: ExtractorId, persistence?: CasePersistence) {
       );
       let extraction: Extraction;
       try {
-        const { data, fellBack } = await withFallback(engine, (e) => apiPost<Extraction>("/api/extract", { text, extractor: e }));
-        extraction = data;
-        patch(id, () => ({ extraction: { status: "done", data, fellBack } }));
+        extraction = await apiPost<Extraction>("/api/extract", { text, region });
+        patch(id, () => ({ extraction: { status: "done", data: extraction } }));
       } catch (err) {
         patch(id, () => ({ extraction: { status: "error", error: asApiError(err) } }));
         return;
       }
 
       const results = forAi(extraction);
-      const next = extraction.extractor;
 
       patch(id, () => ({ summary: { status: "loading" } }));
       try {
-        const { data, fellBack } = await withFallback(next, (e) => apiPost<CommentaryResponse>("/api/commentary", { extractor: e, results }));
-        patch(id, () => ({ summary: { status: "done", data, fellBack } }));
+        const data = await apiPost<CommentaryResponse>("/api/commentary", { results });
+        patch(id, () => ({ summary: { status: "done", data } }));
       } catch (err) {
         patch(id, () => ({ summary: { status: "error", error: asApiError(err) } }));
       }
 
       patch(id, () => ({ explanation: { status: "loading" } }));
       try {
-        const { data, fellBack } = await withFallback(next, (e) => apiPost<ExplanationResponse>("/api/explain", { extractor: e, results }));
-        patch(id, () => ({ explanation: { status: "done", data, fellBack } }));
+        const data = await apiPost<ExplanationResponse>("/api/explain", { results });
+        patch(id, () => ({ explanation: { status: "done", data } }));
       } catch (err) {
         patch(id, () => ({ explanation: { status: "error", error: asApiError(err) } }));
       }
     },
-    [engine, patch],
+    [patch],
   );
 
   /** Open a document as a case, analysing it the first time. */
@@ -157,14 +146,14 @@ export function useCases(engine: ExtractorId, persistence?: CasePersistence) {
         reviewed: prior?.reviewed ?? (persistence ? false : readReviewed().has(hash)),
       };
       setCases((all) => ({ ...all, [doc.id]: state }));
-      void analyse(doc.id, doc.text, true);
+      void analyse(doc.id, doc.text, doc.region, true);
     },
     [analyse, persistence],
   );
 
   const reanalyse = useCallback((id: string) => {
     const c = casesRef.current[id];
-    if (c) void analyse(id, c.doc.text);
+    if (c) void analyse(id, c.doc.text, c.doc.region);
   }, [analyse]);
 
   const draftLetter = useCallback(
@@ -174,10 +163,8 @@ export function useCases(engine: ExtractorId, persistence?: CasePersistence) {
       if (!c || !extraction || c.letter.status === "loading") return;
       patch(id, () => ({ letter: { status: "loading" }, letterApproved: false }));
       try {
-        const { data, fellBack } = await withFallback(extraction.extractor, (e) =>
-          apiPost<LetterResponse>("/api/letter", { extractor: e, results: forAi(extraction), patient_name: extraction.meta.patient_name }),
-        );
-        patch(id, () => ({ letter: { status: "done", data, fellBack }, letterDraft: { ...data.letter } }));
+        const data = await apiPost<LetterResponse>("/api/letter", { results: forAi(extraction), patient_name: extraction.meta.patient_name });
+        patch(id, () => ({ letter: { status: "done", data }, letterDraft: { ...data.letter } }));
       } catch (err) {
         patch(id, () => ({ letter: { status: "error", error: asApiError(err) } }));
       }
@@ -217,10 +204,8 @@ export function useCases(engine: ExtractorId, persistence?: CasePersistence) {
       patch(id, (cur) => ({ chat: [...cur.chat, { id: tid, question, status: "loading" }] }));
       const settle = (turn: Partial<ChatTurn>) => patch(id, (cur) => ({ chat: cur.chat.map((t) => (t.id === tid ? { ...t, ...turn } : t)) }));
       try {
-        const { data, fellBack } = await withFallback(extraction.extractor, (e) =>
-          apiPost<AnswerResponse>("/api/ask", { extractor: e, results: forAi(extraction), question, history }),
-        );
-        settle({ status: "done", answer: data, fellBack });
+        const data = await apiPost<AnswerResponse>("/api/ask", { results: forAi(extraction), question, history });
+        settle({ status: "done", answer: data });
       } catch (err) {
         settle({ status: "error", error: asApiError(err) });
       }

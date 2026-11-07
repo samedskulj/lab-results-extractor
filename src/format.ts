@@ -1,5 +1,5 @@
 import { Check, ChevronDown, ChevronsDown, ChevronsUp, ChevronUp, CircleHelp, type LucideIcon } from "lucide-react";
-import type { ExtractorId, Flag, IssueCode, NormalisedResult, Support } from "../shared/types.ts";
+import type { Flag, IssueCode, NormalisedResult, Support } from "../shared/types.ts";
 
 export type GroupId = "critical" | "outside" | "check" | "normal";
 
@@ -52,8 +52,6 @@ export function rangeGeometry(value: number | null, low: number | null, high: nu
   const l = low as number;
   return { band: [30, 100] as const, at: clamp(value < l ? (30 * value) / (l || 1) : 30 + (40 * (value - l)) / (l || 1)) };
 }
-
-export const ENGINE_NAME: Record<ExtractorId, string> = { claude: "AI", baseline: "Basic reader" };
 
 export const SUPPORT_DISPLAY: Record<Support, { label: string; level: number }> = {
   strong: { label: "Strong support", level: 3 },

@@ -1,5 +1,5 @@
 import { ANALYTES, findConverter, roundValue, type AnalyteId } from "../shared/catalogue.ts";
-import type { Counts, EvalReport, ExtractorId, Metrics, NormalisedResult, SampleScore } from "../shared/types.ts";
+import type { Counts, EvalReport, Metrics, NormalisedResult, SampleScore } from "../shared/types.ts";
 import { extractResults } from "./pipeline.ts";
 import { listSamples, loadGolden, type Golden } from "./samples.ts";
 
@@ -45,13 +45,13 @@ export function scoreResults(predicted: NormalisedResult[], golden: Golden): Cou
   return { ...counts, mistakes };
 }
 
-export async function runEval(extractor: ExtractorId): Promise<EvalReport> {
+export async function runEval(): Promise<EvalReport> {
   const started = performance.now();
   const samples = await listSamples();
 
   const scores: SampleScore[] = await Promise.all(
     samples.map(async (sample) => {
-      const [{ results }, golden] = await Promise.all([extractResults(sample.text, extractor), loadGolden(sample.id)]);
+      const [{ results }, golden] = await Promise.all([extractResults(sample.text), loadGolden(sample.id)]);
       const { mistakes, ...counts } = scoreResults(results, golden);
       return { sampleId: sample.id, title: sample.title, ...counts, ...toMetrics(counts), mistakes };
     }),
@@ -68,5 +68,5 @@ export async function runEval(extractor: ExtractorId): Promise<EvalReport> {
     { expected: 0, predicted: 0, matched: 0, correctValue: 0, correctFlag: 0 },
   );
 
-  return { extractor, samples: scores, overall: { ...total, ...toMetrics(total) }, elapsed_ms: Math.round(performance.now() - started) };
+  return { samples: scores, overall: { ...total, ...toMetrics(total) }, elapsed_ms: Math.round(performance.now() - started) };
 }

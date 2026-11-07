@@ -1,6 +1,6 @@
 import { Check, CircleAlert, LoaderCircle } from "lucide-react";
-import type { ExtractorId } from "../../shared/types.ts";
-import { ENGINE_NAME, seconds } from "../format.ts";
+import { useState } from "react";
+import { seconds } from "../format.ts";
 import { TopSheet } from "./TopSheet.tsx";
 import type { CaseState, Task } from "./useCases.ts";
 
@@ -14,13 +14,10 @@ interface Stage {
   time?: number;
 }
 
-const byName = (engine?: ExtractorId, fellBack?: boolean) => (engine ? `${ENGINE_NAME[engine]}${fellBack ? " · AI offline" : ""}` : "AI");
-
 /** The real stages, with counts taken from the results themselves. */
 function stages(c: CaseState): Stage[] {
   const ex = c.extraction;
   const results = ex.data?.results ?? [];
-  const engine = ex.data?.extractor;
   const converted = results.filter((r) => r.issues.some((i) => i.code === "converted")).length;
   const defaults = results.filter((r) => r.range_source === "default").length;
   const unverified = results.filter((r) => r.issues.some((i) => i.code === "ungrounded" || i.code === "value_not_in_evidence")).length;
@@ -31,7 +28,7 @@ function stages(c: CaseState): Stage[] {
   return [
     {
       title: "Read",
-      by: byName(engine, ex.fellBack),
+      by: "AI",
       status: ex.status,
       detail: ex.status === "done" ? `${results.length} results found, each with the quote it came from` : ex.status === "loading" ? "Finding every current result and quoting it" : "Not started",
       time: ex.data?.elapsed_ms,
@@ -53,14 +50,14 @@ function stages(c: CaseState): Stage[] {
     },
     {
       title: "Summarise",
-      by: byName(c.summary.data ? engine : undefined, c.summary.fellBack),
+      by: "AI",
       status: c.summary.status,
       detail: c.summary.status === "done" ? "Summary written from the standardised values only" : c.summary.status === "error" ? (c.summary.error?.message ?? "Failed") : "Short summary for the results page",
       time: c.summary.data?.elapsed_ms,
     },
     {
       title: "Explain",
-      by: byName(c.explanation.data?.extractor, c.explanation.fellBack),
+      by: "AI",
       status: c.explanation.status,
       detail:
         c.explanation.status === "done"
@@ -81,6 +78,8 @@ function StageIcon({ status, n }: { status: Status; n: number }) {
 }
 
 export function DocumentStep({ c, active, onSelect }: { c: CaseState; active: number | null; onSelect: (i: number) => void }) {
+  const source = c.doc.source;
+  const [view, setView] = useState<"text" | "original">("text");
   return (
     <div className="split split-doc">
       <section className="panel pipeline" aria-labelledby="pipeline-title" aria-live="polite">
@@ -109,9 +108,38 @@ export function DocumentStep({ c, active, onSelect }: { c: CaseState; active: nu
       <section className="panel original" aria-labelledby="original-title">
         <header className="panel-head">
           <h2 id="original-title">Original document</h2>
-          <span className="muted small">{c.doc.title}</span>
+          {source ? (
+            <span className="seg" role="group" aria-label="Show the document as">
+              <button type="button" aria-pressed={view === "text"} className={view === "text" ? "is-on" : ""} onClick={() => setView("text")}>
+                Text read
+              </button>
+              <button type="button" aria-pressed={view === "original"} className={view === "original" ? "is-on" : ""} onClick={() => setView("original")}>
+                {source.kind === "pdf" ? "Original PDF" : "Original photo"}
+              </button>
+            </span>
+          ) : (
+            <span className="muted small">{c.doc.title}</span>
+          )}
         </header>
-        <TopSheet text={c.doc.text} results={c.extraction.data?.results ?? []} active={active} onSelect={onSelect} />
+        {source && view === "original" ? (
+          <div className="source-view">
+            {source.kind === "pdf" ? (
+              <object data={source.url} type="application/pdf" aria-label="Original PDF">
+                <a href={source.url} target="_blank" rel="noreferrer">
+                  Open the PDF
+                </a>
+              </object>
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={source.url} alt="The original photo of the report" />
+            )}
+          </div>
+        ) : (
+          <>
+            {source && <p className="panel-pad muted small">Text read from the {source.kind === "pdf" ? "PDF" : "photo"} by the AI assistant. Check anything that looks off against the original.</p>}
+            <TopSheet text={c.doc.text} results={c.extraction.data?.results ?? []} active={active} onSelect={onSelect} />
+          </>
+        )}
       </section>
     </div>
   );

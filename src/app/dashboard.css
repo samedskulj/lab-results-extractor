@@ -7,3 +7,54 @@
 @import "tailwindcss/utilities.css" layer(utilities);
 @import "tw-animate-css";
 @import "../styles/theme.css";
+
+/*
+ * shadcn/ui parts need Tailwind's element resets, which the dashboard skips (preflight is off). Wrap new UI in
+ * .tw to get them. They sit in the base layer, so the hand-written dashboard CSS still wins wherever it applies.
+ */
+@layer base {
+  .tw,
+  .tw *,
+  .tw ::before,
+  .tw ::after,
+  [data-slot],
+  [data-slot] * {
+    box-sizing: border-box;
+    border: 0 solid var(--border);
+  }
+  .tw button,
+  .tw input,
+  .tw select,
+  .tw textarea {
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    background-color: transparent;
+    border-radius: 0;
+  }
+  .tw h1,
+  .tw h2,
+  .tw h3,
+  .tw p {
+    margin: 0;
+  }
+  .tw a {
+    color: inherit;
+    text-decoration: inherit;
+  }
+  .tw svg,
+  .tw img {
+    display: block;
+    max-width: 100%;
+  }
+  .tw ol,
+  .tw ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .tw button:not(:disabled),
+  .tw [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}

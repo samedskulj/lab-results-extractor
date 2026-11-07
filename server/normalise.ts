@@ -15,7 +15,9 @@ export function flagValue(id: AnalyteId, value: number | null, low: Bound, high:
 }
 
 const squash = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
-const numbersIn = (s: string) => (s.match(/\d+(?:\.\d+)?/g) ?? []).map(Number);
+/** Numbers in a quote. A comma may be a decimal mark (5,8) or a thousands mark (1,200): accept either reading. */
+const numbersIn = (s: string) =>
+  (s.match(/\d+(?:[.,]\d+)?/g) ?? []).flatMap((t) => (t.includes(",") ? [Number(t.replace(",", ".")), Number(t.replace(",", ""))] : [Number(t)]));
 
 /** Guardrails against hallucination: the quote must exist in the document and contain the value. */
 function groundingIssues(raw: RawResult, document: string): Issue[] {

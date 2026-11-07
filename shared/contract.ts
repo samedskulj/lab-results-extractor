@@ -1,13 +1,12 @@
 // Types shared by server and browser. Keep this file free of Node imports.
 
 export interface Health {
-  /** True when a Claude API key is configured. */
+  /** True when the server has credentials for the AI service. */
   live: boolean;
-  model: string;
 }
 
 export interface ApiErrorBody {
   error: string;
-  /** "claude_unavailable" means the rule-based engine can still do the job. */
-  code?: "claude_unavailable";
+  /** "ai_unavailable" means the AI service failed or is out of capacity; trying again later may work. */
+  code?: "ai_unavailable" | "signed_out";
 }

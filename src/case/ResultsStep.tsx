@@ -19,7 +19,7 @@ export function RangeBar({ r }: { r: NormalisedResult }) {
 }
 
 function Summary({ c, onStep }: { c: CaseState; onStep: (s: Step) => void }) {
-  const { status, data, error, fellBack } = c.summary;
+  const { status, data, error } = c.summary;
   const results = c.extraction.data!.results;
   const counts = countGroups(results);
   const critical = results.map((r, i) => ({ r, i })).filter(({ r }) => groupOf(r) === "critical");
@@ -74,7 +74,7 @@ function Summary({ c, onStep }: { c: CaseState; onStep: (s: Step) => void }) {
         )}
         <div className="summary-foot">
           <span className="ai-meta">
-            <SourceTag engine={data ? (fellBack ? "baseline" : c.extraction.data?.extractor) : undefined} fellBack={fellBack} />
+            {data && <SourceTag />}
             <span className="muted small">Decision support only, not a diagnosis.</span>
           </span>
           <Button variant="quiet" size="sm" onClick={() => onStep("explain")}>

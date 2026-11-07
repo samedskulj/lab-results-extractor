@@ -57,7 +57,7 @@ const FAQ = [
   },
   {
     q: "Which documents can it read?",
-    a: "Hospital lab reports, US-unit panels, GP referral letters, lab-system exports and OCR'd scans, pasted as text. PDF and image upload aren't supported yet.",
+    a: "Hospital lab reports, US-unit panels, GP referral letters, lab-system exports and scans. Upload a photo or PDF, or paste the text, and choose the report's country so units, decimals and dates are read the way they are printed.",
   },
   {
     q: "How do I know a value is right?",
@@ -65,7 +65,7 @@ const FAQ = [
   },
   {
     q: "What happens if the AI is unavailable?",
-    a: "Readout falls back to basic rule-based reading and says so on every result it affects, so you always know which kind of check produced a value.",
+    a: "Readout tells you plainly and lets you try again. It never substitutes a guess: a document is only shown once every value has been read and checked against the original.",
   },
   {
     q: "Which units and reference ranges does it use?",
@@ -113,14 +113,6 @@ export default function LandingPage() {
           />
           <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 pt-14 pb-20 sm:px-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14 lg:pt-20 lg:pb-28">
             <div>
-              <a
-                href={APP_URL}
-                className="group mb-7 inline-flex items-center gap-2 rounded-full border bg-card/80 py-1 pr-3 pl-1 text-sm shadow-xs transition-colors hover:border-input"
-              >
-                <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">For GPs</span>
-                <span className="text-ink-2">Try five fictional sample patients</span>
-                <ArrowRight className="size-3.5 text-ink-3 transition-transform group-hover:translate-x-0.5" aria-hidden />
-              </a>
               <h1 id="hero-title" className="font-heading text-[2.75rem] leading-[1.02] font-bold tracking-tight text-balance sm:text-6xl lg:text-[4.25rem]">
                 Every lab value, traced to the line it came from.
               </h1>
@@ -139,7 +131,7 @@ export default function LandingPage() {
                 </Button>
               </div>
               <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm text-ink-3">
-                {["Sign in with an email link", "Decision support, not a diagnosis"].map((t) => (
+                {["Sign in with email and password", "Decision support, not a diagnosis"].map((t) => (
                   <li key={t} className="flex items-center gap-1.5">
                     <Check className="size-4 text-mint" aria-hidden /> {t}
                   </li>
@@ -206,7 +198,7 @@ export default function LandingPage() {
             <SectionHeading
               eyebrow="Trust"
               title={<span id="trust-title">What the AI does, and what it never does</span>}
-              lead="If the AI is offline, Readout falls back to basic rule-based checks and tells you so on every result."
+              lead="The AI reads and writes prose. Fixed clinical rules set units, ranges and flags, and every value is checked against the original."
             />
             <div className="grid overflow-hidden rounded-2xl border md:grid-cols-2">
               <div className="p-7 sm:p-8">
@@ -361,10 +353,10 @@ export default function LandingPage() {
             />
             <ShieldCheck className="mx-auto mb-5 size-9 text-mint" aria-hidden />
             <h2 id="cta-title" className="font-heading text-3xl font-bold tracking-tight text-white sm:text-5xl">
-              Start with the sample patients.
+              Read your first report in seconds.
             </h2>
             <p className="mx-auto mt-4 max-w-[58ch] text-lg text-white/75">
-              Five fictional documents are waiting in the worklist, from a tidy hospital report to a noisy scan. Running a practice? Talk to us about trying
+              Photograph a report and see what needs attention, with every value traced to its line. Running a practice? Talk to us about trying
               Readout.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -407,7 +399,7 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col gap-2">
             <Brand size={24} />
-            <p className="text-sm text-ink-3">Decision support, not a diagnosis. All patients shown are fictional.</p>
+            <p className="text-sm text-ink-3">Decision support, not a diagnosis. Patients shown on this page are fictional.</p>
           </div>
           <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
             {[...NAV, { href: APP_URL, label: "Dashboard" }, { href: CONTACT_URL, label: "Contact" }].map((n) => (

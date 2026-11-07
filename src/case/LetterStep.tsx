@@ -35,7 +35,7 @@ function checksFor(c: CaseState, body: string): Check[] {
 
 export function LetterStep({ c, store }: { c: CaseState; store: Cases }) {
   const id = c.doc.id;
-  const { status, data, error, fellBack } = c.letter;
+  const { status, data, error } = c.letter;
   const draft = c.letterDraft;
   const [copied, setCopied] = useState(false);
 
@@ -68,7 +68,7 @@ export function LetterStep({ c, store }: { c: CaseState; store: Cases }) {
       <section className="panel letter" aria-labelledby="letter-title" aria-busy={status === "loading"}>
         <header className="ai-head">
           <h2 id="letter-title">Letter to the patient</h2>
-          <SourceTag engine={data?.extractor} fellBack={fellBack} />
+          {data && <SourceTag />}
           <span className={`approval${c.letterApproved ? " is-approved" : ""}`}>
             {c.letterApproved ? <ShieldCheck size={14} aria-hidden /> : <PenLine size={14} aria-hidden />}
             {c.letterApproved ? "Approved by you" : "Draft: needs your approval"}

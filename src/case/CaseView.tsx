@@ -93,18 +93,6 @@ export function CaseView({ state: c, step, onStep, store }: { state: CaseState; 
         </div>
       </section>
 
-      {c.extraction.fellBack && (
-        <div className="notice" role="status">
-          <p>
-            <strong>The AI assistant is offline, so this document was read by fixed rules.</strong> They only read tidy tables: results in letters or scans may be
-            missing. Check the original.
-          </p>
-          <Button variant="secondary" size="sm" icon={<RotateCcw size={14} aria-hidden />} onClick={() => store.reanalyse(id)}>
-            Try the AI again
-          </Button>
-        </div>
-      )}
-
       {c.extraction.status === "error" && (
         <ErrorPanel
           error={c.extraction.error}

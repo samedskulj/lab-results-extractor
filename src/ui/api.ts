@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
-import type { ApiErrorBody, Health } from "../../shared/contract.ts";
+import { useCallback, useState } from "react";
+import type { ApiErrorBody } from "../../shared/contract.ts";
+import { supabase } from "../lib/supabase.ts";
 
 /** An API failure with a sentence for the user and, when relevant, a recovery hint. */
 export class ApiError extends Error {
@@ -10,10 +11,16 @@ export class ApiError extends Error {
   }
 }
 
+/** The signed-in doctor's access token, sent so the server knows who is asking. */
+async function authHeader(): Promise<Record<string, string>> {
+  const token = (await supabase?.auth.getSession())?.data.session?.access_token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(path, init);
+    res = await fetch(path, { ...init, headers: { ...(await authHeader()), ...init?.headers } });
   } catch {
     throw new ApiError("Can't reach the server. Is `npm run dev` running?");
   }
@@ -31,27 +38,6 @@ export const apiPost = <T>(path: string, body: unknown): Promise<T> =>
   request<T>(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 export const asApiError = (err: unknown): ApiError => (err instanceof ApiError ? err : new ApiError((err as Error).message));
-
-const getCache = new Map<string, Promise<unknown>>();
-
-/** GET once per page load; components asking for the same path share one request. */
-export function useFetch<T>(path: string): { data?: T; error?: string } {
-  const [state, setState] = useState<{ data?: T; error?: string }>({});
-  useEffect(() => {
-    let cancelled = false;
-    if (!getCache.has(path)) getCache.set(path, apiGet<T>(path));
-    (getCache.get(path) as Promise<T>).then(
-      (data) => !cancelled && setState({ data }),
-      (err: Error) => !cancelled && setState({ error: err.message }),
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [path]);
-  return state;
-}
-
-export const useHealth = (): Health | undefined => useFetch<Health>("/api/health").data;
 
 /** Wrap an async call with loading / error / result state. */
 export function useAction<Args extends unknown[], T>(fn: (...args: Args) => Promise<T>) {

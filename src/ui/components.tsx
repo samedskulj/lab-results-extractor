@@ -1,6 +1,6 @@
-import { CircleAlert, LoaderCircle, Sparkles, Wrench } from "lucide-react";
+import { CircleAlert, LoaderCircle, Sparkles } from "lucide-react";
 import type { ButtonHTMLAttributes, ComponentProps, ReactNode } from "react";
-import type { ExtractorId, NormalisedResult } from "../../shared/types.ts";
+import type { NormalisedResult } from "../../shared/types.ts";
 import { FLAG_DISPLAY, groupOf } from "../format.ts";
 import type { ApiError } from "./api.ts";
 
@@ -46,19 +46,11 @@ export function ErrorPanel({ error, action }: { error?: ApiError; action?: React
   );
 }
 
-/** Who wrote this, in plain words: the AI assistant, or fixed rules (including when the AI was offline). */
-export function SourceTag({ engine, fellBack }: { engine?: ExtractorId; fellBack?: boolean }) {
-  if (!engine) return null;
-  if (engine === "claude") {
-    return (
-      <span className="source-tag is-ai" title="Written by the AI assistant from the checked results. Decision support, not a diagnosis.">
-        <Sparkles size={12} aria-hidden /> AI draft
-      </span>
-    );
-  }
+/** Marks prose written by the AI assistant from the checked results. */
+export function SourceTag() {
   return (
-    <span className="source-tag" title="Written by fixed clinical rules, not the AI assistant.">
-      <Wrench size={12} aria-hidden /> Basic check{fellBack ? " · AI offline" : ""}
+    <span className="source-tag is-ai" title="Written by the AI assistant from the checked results. Decision support, not a diagnosis.">
+      <Sparkles size={12} aria-hidden /> AI draft
     </span>
   );
 }
