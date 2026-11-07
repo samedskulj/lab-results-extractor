@@ -1,4 +1,4 @@
-import { Check, CircleAlert, FilePlus2, FileText, Inbox, LoaderCircle, LogOut } from "lucide-react";
+import { Check, CircleAlert, FileText, Inbox, LoaderCircle, LogOut } from "lucide-react";
 import { useAuth } from "../auth/AuthGate.tsx";
 import type { Route } from "../App.tsx";
 import { caseName, caseStatus, hasPatientName, type CaseStatus } from "../case/status.ts";
@@ -18,14 +18,12 @@ export function Sidebar({
   cases,
   route,
   onRoute,
-  onAdd,
   onOpen,
 }: {
   docs: CaseDoc[];
   cases: Record<string, CaseState>;
   route: Route;
   onRoute: (r: Route) => void;
-  onAdd: () => void;
   onOpen: (doc: CaseDoc) => void;
 }) {
   const auth = useAuth();
@@ -43,10 +41,6 @@ export function Sidebar({
           <Inbox size={18} aria-hidden />
           Worklist
           {waiting > 0 && <span className="nav-count" aria-label={`${waiting} not reviewed`}>{waiting}</span>}
-        </button>
-        <button onClick={onAdd}>
-          <FilePlus2 size={18} aria-hidden />
-          Add a document
         </button>
       </nav>
 

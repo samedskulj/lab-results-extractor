@@ -2,12 +2,13 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import type { z } from "zod";
 
 /** Small and fast: reading, summarising and drafting from checked values doesn't need a larger model. */
 const DEFAULT_MODEL = "claude-haiku-5-5";
-const CACHE_DIR = path.resolve(".llm-cache");
+const CACHE_DIR = process.env.VERCEL ? path.join(tmpdir(), ".llm-cache") : path.resolve(".llm-cache");
 
 export type Effort = "low" | "medium" | "high";
 
@@ -21,7 +22,10 @@ export const model = (): string => process.env.AI_MODEL ?? DEFAULT_MODEL;
 export const isLive = (): boolean => Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
 
 let client: Anthropic | undefined;
-const getClient = (): Anthropic => (client ??= new Anthropic());
+const getClient = (): Anthropic => {
+  if (!isLive()) throw new LlmError("The AI assistant isn't set up on this server: ANTHROPIC_API_KEY is missing.");
+  return (client ??= new Anthropic());
+};
 
 /** A document the AI should read directly: a photo or a PDF. */
 export interface FileInput {
@@ -108,6 +112,10 @@ async function readCache<T>(key: string, schema: z.ZodType<T>): Promise<T | unde
 
 async function writeCache(key: string, value: unknown): Promise<void> {
   if (!cacheEnabled()) return;
-  await mkdir(CACHE_DIR, { recursive: true });
-  await writeFile(path.join(CACHE_DIR, `${key}.json`), JSON.stringify(value, null, 2));
+  try {
+    await mkdir(CACHE_DIR, { recursive: true });
+    await writeFile(path.join(CACHE_DIR, `${key}.json`), JSON.stringify(value, null, 2));
+  } catch {
+    /* read-only filesystem (serverless): the cache is an optimisation, never a failure */
+  }
 }

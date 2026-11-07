@@ -59,7 +59,7 @@ export function App() {
 
   return (
     <div className={`shell${navOpen ? " nav-open" : ""}`}>
-      <Sidebar docs={sorted} cases={store.cases} route={route} onRoute={go} onAdd={addDocument} onOpen={openDoc} />
+      <Sidebar docs={sorted} cases={store.cases} route={route} onRoute={go} onOpen={openDoc} />
       <div className="shell-main">
         <TopBar route={route} current={current} step={step} onRoute={go} onToggleNav={() => setNavOpen((o) => !o)} />
         <main className="main" id="main">

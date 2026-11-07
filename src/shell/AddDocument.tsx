@@ -79,7 +79,7 @@ export function AddDocumentDialog({ open, onOpenChange, onOpen }: { open: boolea
     <Dialog open={open} onOpenChange={(next) => (busy ? undefined : onOpenChange(next))}>
       {/* The form mounts only while open, so each visit starts clean. */}
       <DialogContent
-        className="tw max-h-[calc(100dvh-2rem)] gap-5 overflow-y-auto sm:max-w-lg"
+        className="tw flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg"
         onInteractOutside={(e) => busy && e.preventDefault()}
         onEscapeKeyDown={(e) => busy && e.preventDefault()}
       >
@@ -175,13 +175,13 @@ function AddDocumentForm({ busy, setBusy, onOpen }: { busy: boolean; setBusy: (b
   };
 
   return (
-    <div className="contents" onPaste={onPaste}>
-      <DialogHeader className="gap-1.5">
+    <div className="flex min-h-0 flex-1 flex-col" onPaste={onPaste}>
+      <DialogHeader className="shrink-0 gap-1.5 p-6 pr-12 pb-4">
         <DialogTitle className="font-heading text-xl font-bold tracking-tight">Add a document</DialogTitle>
         <DialogDescription>Photograph or upload a lab report, or paste its text. Readout reads it, standardises it and puts critical results first.</DialogDescription>
       </DialogHeader>
 
-      <div>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -298,7 +298,7 @@ function AddDocumentForm({ busy, setBusy, onOpen }: { busy: boolean; setBusy: (b
           </FieldGroup>
 
           <DialogFooter className="mt-6 flex-col items-stretch gap-2 sm:flex-col">
-            <Button type="submit" size="lg" className="h-11 w-full" disabled={!ready || busy} style={{ background: "var(--ai-fill)" }}>
+            <Button type="submit" size="lg" className="h-11 w-full !text-white" disabled={!ready || busy} style={{ background: "var(--ai-fill)", color: "#fff" }}>
               {busy ? <Spinner /> : <Sparkles aria-hidden />}
               {busy ? (mode === "file" ? "Reading the document…" : "Analysing…") : "Analyse document"}
             </Button>
