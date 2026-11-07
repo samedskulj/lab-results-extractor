@@ -9,3 +9,6 @@ next-env.d.ts
 .llm-cache
 *.log
 .vercel
+
+.vercel
+.env*
