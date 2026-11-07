@@ -64,9 +64,10 @@ body { margin: 0; background: var(--ground); color: var(--ink); font: 400 0.9375
 :focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 h1, h2, h3, h4, p { margin: 0; }
 h1, h2, h3 { text-wrap: balance; }
-button { font: inherit; color: inherit; }
-input, textarea { font: inherit; color: inherit; }
-a { color: var(--blue-ink); text-underline-offset: 3px; }
+/* Unlayered, so these would beat Tailwind utilities (white button text, link colours): keep them off shadcn parts (.tw). */
+button:not(.tw *) { font: inherit; color: inherit; }
+input:not(.tw *), textarea:not(.tw *) { font: inherit; color: inherit; }
+a:not(.tw *) { color: var(--blue-ink); text-underline-offset: 3px; }
 .num { text-align: right; }
 .muted { color: var(--ink-3); }
 .small { font-size: 0.8125rem; }
@@ -178,7 +179,7 @@ a { color: var(--blue-ink); text-underline-offset: 3px; }
 .ai-head h2 { font-size: 0.9375rem; font-weight: 600; }
 
 /* ---------- Worklist ---------- */
-.worklist-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 20px; align-items: start; }
+.page-head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .doc-table { width: 100%; border-collapse: collapse; }
 .doc-table th { text-align: left; font-size: 0.75rem; font-weight: 500; color: var(--ink-3); padding: 12px 18px; border-bottom: 1px solid var(--rule); }
 .doc-table td { padding: 13px 18px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
@@ -492,7 +493,7 @@ tr.result[class] { color: var(--ink); }
 
 /* ---------- Responsive (container first, then viewport) ---------- */
 @container main (max-width: 1080px) {
-  .split, .split-doc, .split-letter, .worklist-grid { grid-template-columns: minmax(0, 1fr); }
+  .split, .split-doc, .split-letter { grid-template-columns: minmax(0, 1fr); }
   .original.is-sticky { position: static; max-height: none; }
   .original .sheet-text { max-height: 420px; }
   .case-head { grid-template-columns: minmax(0, 1fr); }

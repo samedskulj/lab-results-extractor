@@ -6,9 +6,10 @@ import { caseStatus, STATUS_RANK } from "./case/status.ts";
 import { useCases, type CaseDoc, type Step } from "./case/useCases.ts";
 import { Sidebar } from "./shell/Sidebar.tsx";
 import { TopBar } from "./shell/TopBar.tsx";
+import { AddDocumentDialog } from "./shell/AddDocument.tsx";
 import { Worklist } from "./shell/Worklist.tsx";
 
-export type Route = { kind: "worklist"; focusAdd?: number } | { kind: "case"; id: string };
+export type Route = { kind: "worklist" } | { kind: "case"; id: string };
 
 export function App() {
   const auth = useAuth();
@@ -18,6 +19,7 @@ export function App() {
   const [docs, setDocs] = useState<CaseDoc[]>([]);
   const [steps, setSteps] = useState<Record<string, Step>>({});
   const [navOpen, setNavOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
 
   // Critical first, then outside range; reviewed cases sink. Equal ranks keep the newest on top.
   const sorted = useMemo(
@@ -35,9 +37,15 @@ export function App() {
       store.open(doc);
       setRoute({ kind: "case", id: doc.id });
       setNavOpen(false);
+      setAddOpen(false);
     },
     [store],
   );
+
+  const addDocument = useCallback(() => {
+    setNavOpen(false);
+    setAddOpen(true);
+  }, []);
 
   const go = useCallback((r: Route) => {
     setRoute(r);
@@ -51,7 +59,7 @@ export function App() {
 
   return (
     <div className={`shell${navOpen ? " nav-open" : ""}`}>
-      <Sidebar docs={sorted} cases={store.cases} route={route} onRoute={go} onOpen={openDoc} />
+      <Sidebar docs={sorted} cases={store.cases} route={route} onRoute={go} onAdd={addDocument} onOpen={openDoc} />
       <div className="shell-main">
         <TopBar route={route} current={current} step={step} onRoute={go} onToggleNav={() => setNavOpen((o) => !o)} />
         <main className="main" id="main">
@@ -63,10 +71,11 @@ export function App() {
               </button>
             </div>
           )}
-          {route.kind === "worklist" && <Worklist docs={sorted} cases={store.cases} focusAdd={route.focusAdd} onOpen={openDoc} />}
+          {route.kind === "worklist" && <Worklist docs={sorted} cases={store.cases} onAdd={addDocument} onOpen={openDoc} />}
           {route.kind === "case" && current && <CaseView key={route.id} state={current} step={step} onStep={setStep} store={store} />}
         </main>
       </div>
+      <AddDocumentDialog open={addOpen} onOpenChange={setAddOpen} onOpen={openDoc} />
       {navOpen && <button className="nav-scrim" aria-label="Close menu" onClick={() => setNavOpen(false)} />}
     </div>
   );

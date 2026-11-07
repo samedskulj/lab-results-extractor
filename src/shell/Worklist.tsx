@@ -1,35 +1,40 @@
-import { ChevronRight, FileText, Inbox } from "lucide-react";
+import { ChevronRight, FilePlus2, FileText, Inbox } from "lucide-react";
 import { caseName, caseStatus, hasPatientName } from "../case/status.ts";
 import type { CaseDoc, CaseState } from "../case/useCases.ts";
 import { initials } from "../format.ts";
-import { AddDocument } from "./AddDocument.tsx";
+import { Button } from "../ui/index.ts";
 import { StatusIcon } from "./Sidebar.tsx";
 
 export function Worklist({
   docs,
   cases,
-  focusAdd,
+  onAdd,
   onOpen,
 }: {
   docs: CaseDoc[];
   cases: Record<string, CaseState>;
-  focusAdd?: number;
+  onAdd: () => void;
   onOpen: (doc: CaseDoc) => void;
 }) {
   const waiting = docs.filter((d) => !cases[d.id]?.reviewed).length;
 
   return (
     <div className="worklist">
-      <header className="page-head">
-        <h1>Incoming results</h1>
-        <p>
-          {docs.length === 0
-            ? "Add a lab report to get started. Critical results sort to the top."
-            : `${docs.length} ${docs.length === 1 ? "document" : "documents"} · ${waiting} not reviewed. Critical results sort to the top.`}
-        </p>
+      <header className="page-head page-head-row">
+        <div>
+          <h1>Incoming results</h1>
+          <p>
+            {docs.length === 0
+              ? "Add a lab report to get started. Critical results sort to the top."
+              : `${docs.length} ${docs.length === 1 ? "document" : "documents"} · ${waiting} not reviewed. Critical results sort to the top.`}
+          </p>
+        </div>
+        <Button variant="primary" icon={<FilePlus2 size={16} aria-hidden />} onClick={onAdd}>
+          Add a document
+        </Button>
       </header>
 
-      <div className="worklist-grid">
+      <div>
         <section className="panel" aria-labelledby="docs-title">
           <h2 id="docs-title" className="visually-hidden">
             Documents
@@ -40,7 +45,10 @@ export function Worklist({
                 <Inbox size={22} />
               </span>
               <h3>Nothing to review yet</h3>
-              <p>Photograph or upload a report on the right. Each one is read, standardised and checked against the original, then listed here with what needs attention.</p>
+              <p>Photograph or upload a report. Each one is read, standardised and checked against the original, then listed here with what needs attention.</p>
+              <Button variant="primary" icon={<FilePlus2 size={16} aria-hidden />} onClick={onAdd}>
+                Add a document
+              </Button>
             </div>
           ) : (
             <table className="doc-table">
@@ -93,7 +101,6 @@ export function Worklist({
           )}
         </section>
 
-        <AddDocument focusAdd={focusAdd} onOpen={onOpen} />
       </div>
     </div>
   );

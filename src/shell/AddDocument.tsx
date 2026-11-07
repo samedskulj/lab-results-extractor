@@ -1,10 +1,10 @@
 import { Camera, CircleAlert, FileText, FileUp, Sparkles, X } from "lucide-react";
-import { useEffect, useRef, useState, type ClipboardEvent, type DragEvent } from "react";
+import { useRef, useState, type ClipboardEvent, type DragEvent } from "react";
 import { REGION_LIST, REGIONS, REGION_IDS, type RegionId } from "../../shared/regions.ts";
 import type { Transcription } from "../../shared/types.ts";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
@@ -73,26 +73,32 @@ async function prepare(picked: Picked): Promise<{ media_type: "image/jpeg" | "ap
 }
 
 /** Adds a document to the worklist: a photo or PDF, or pasted text, read with the template for the report's country. */
-export function AddDocument({ focusAdd, onOpen }: { focusAdd?: number; onOpen: (doc: CaseDoc) => void }) {
+export function AddDocumentDialog({ open, onOpenChange, onOpen }: { open: boolean; onOpenChange: (open: boolean) => void; onOpen: (doc: CaseDoc) => void }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <Dialog open={open} onOpenChange={(next) => (busy ? undefined : onOpenChange(next))}>
+      {/* The form mounts only while open, so each visit starts clean. */}
+      <DialogContent
+        className="tw max-h-[calc(100dvh-2rem)] gap-5 overflow-y-auto sm:max-w-lg"
+        onInteractOutside={(e) => busy && e.preventDefault()}
+        onEscapeKeyDown={(e) => busy && e.preventDefault()}
+      >
+        <AddDocumentForm busy={busy} setBusy={setBusy} onOpen={onOpen} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AddDocumentForm({ busy, setBusy, onOpen }: { busy: boolean; setBusy: (busy: boolean) => void; onOpen: (doc: CaseDoc) => void }) {
   const [mode, setMode] = useState<Mode>("file");
   const [region, setRegion] = useState<RegionId>(readRegion);
   const [picked, setPicked] = useState<Picked>();
   const [text, setText] = useState("");
   const [dragging, setDragging] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
-  const cardRef = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const cameraInput = useRef<HTMLInputElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
-
-  // "Add a document" in the sidebar brings the doctor here.
-  useEffect(() => {
-    if (!focusAdd) return;
-    cardRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    (mode === "file" ? fileInput.current?.parentElement?.querySelector("button") : textRef.current)?.focus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusAdd]);
 
   const choose = (r: RegionId) => {
     setRegion(r);
@@ -169,15 +175,13 @@ export function AddDocument({ focusAdd, onOpen }: { focusAdd?: number; onOpen: (
   };
 
   return (
-    <Card ref={cardRef} className="gap-5 py-6" onPaste={onPaste} aria-labelledby="add-title">
-      <CardHeader className="gap-1.5 px-6">
-        <CardTitle id="add-title" className="flex items-center gap-2 font-heading text-lg font-bold tracking-tight">
-          <FileUp className="size-[18px]" aria-hidden /> Add a document
-        </CardTitle>
-        <CardDescription>Photograph or upload a lab report, or paste its text. Readout reads it, standardises it and puts critical results first.</CardDescription>
-      </CardHeader>
+    <div className="contents" onPaste={onPaste}>
+      <DialogHeader className="gap-1.5">
+        <DialogTitle className="font-heading text-xl font-bold tracking-tight">Add a document</DialogTitle>
+        <DialogDescription>Photograph or upload a lab report, or paste its text. Readout reads it, standardises it and puts critical results first.</DialogDescription>
+      </DialogHeader>
 
-      <CardContent className="px-6">
+      <div>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -293,15 +297,15 @@ export function AddDocument({ focusAdd, onOpen }: { focusAdd?: number; onOpen: (
             )}
           </FieldGroup>
 
-          <CardFooter className="mt-6 flex-col items-stretch gap-2 p-0">
+          <DialogFooter className="mt-6 flex-col items-stretch gap-2 sm:flex-col">
             <Button type="submit" size="lg" className="h-11 w-full" disabled={!ready || busy} style={{ background: "var(--ai-fill)" }}>
               {busy ? <Spinner /> : <Sparkles aria-hidden />}
               {busy ? (mode === "file" ? "Reading the document…" : "Analysing…") : "Analyse document"}
             </Button>
             <p className="text-center text-xs text-muted-foreground">Every value is checked against the original before it is shown.</p>
-          </CardFooter>
+          </DialogFooter>
         </form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -18,12 +18,14 @@ export function Sidebar({
   cases,
   route,
   onRoute,
+  onAdd,
   onOpen,
 }: {
   docs: CaseDoc[];
   cases: Record<string, CaseState>;
   route: Route;
   onRoute: (r: Route) => void;
+  onAdd: () => void;
   onOpen: (doc: CaseDoc) => void;
 }) {
   const auth = useAuth();
@@ -42,12 +44,13 @@ export function Sidebar({
           Worklist
           {waiting > 0 && <span className="nav-count" aria-label={`${waiting} not reviewed`}>{waiting}</span>}
         </button>
-        <button onClick={() => onRoute({ kind: "worklist", focusAdd: Date.now() })}>
+        <button onClick={onAdd}>
           <FilePlus2 size={18} aria-hidden />
           Add a document
         </button>
       </nav>
 
+      {docs.length > 0 && (
       <section className="incoming" aria-labelledby="incoming-title">
         <h2 id="incoming-title" className="side-heading">
           Incoming
@@ -78,6 +81,7 @@ export function Sidebar({
           })}
         </ul>
       </section>
+      )}
 
       <div className="side-foot">
         {auth && (
